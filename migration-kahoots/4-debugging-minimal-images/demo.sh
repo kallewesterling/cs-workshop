@@ -44,4 +44,5 @@ pe "kubectl debug -it nginx --profile=general --target nginx --image=busybox"
 
 banner "You could also copy the target pod and swap in the -dev image"
 pe "kubectl debug nginx --profile=general --copy-to=nginx-dev --set-image=*=cgr.dev/chainguard/nginx:latest-dev"
+pe "kubectl wait pod/nginx-dev --for=condition=Ready --timeout=60s"
 pe "kubectl exec -it nginx-dev -- sh"
