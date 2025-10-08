@@ -8,13 +8,13 @@ clear
 
 banner "Chainguard continually rebuilds the latest version for each supported release track."
 pe "chainctl package versions list python --show-active"
-pe "chainctl image list --parent=${ORGANIZATION} --repo=python --updated-within=72h"
+pe "chainctl images list --parent=${ORGANIZATION} --repo=python --updated-within=72h"
 
 banner "Therefore, the tags we produce are highly mutable. Even for very specific tags."
-pe "chainctl image history --parent=${ORGANIZATION} python:3.13.3-r2"
-pe "DIGEST_NEW=\$(chainctl image history --parent=${ORGANIZATION} python:3.13.3-r2 -o json | jq -r '.[0].digest')"
-pe "DIGEST_OLD=\$(chainctl image history --parent=${ORGANIZATION} python:3.13.3-r2 -o json | jq -r '.[1].digest')"
-pe "chainctl image diff cgr.dev/${ORGANIZATION}/python@\${DIGEST_OLD} cgr.dev/${ORGANIZATION}/python@\${DIGEST_NEW} | jq -r ."
+pe "chainctl images history --parent=${ORGANIZATION} python:3.13.3-r2"
+pe "DIGEST_NEW=\$(chainctl images history --parent=${ORGANIZATION} python:3.13.3-r2 -o json | jq -r '.[0].digest')"
+pe "DIGEST_OLD=\$(chainctl images history --parent=${ORGANIZATION} python:3.13.3-r2 -o json | jq -r '.[1].digest')"
+pe "chainctl images diff cgr.dev/${ORGANIZATION}/python@\${DIGEST_OLD} cgr.dev/${ORGANIZATION}/python@\${DIGEST_NEW} | jq -r ."
 
 banner "The digest is the sha256 checksum of the manifest/index."
 pe "crane manifest cgr.dev/${ORGANIZATION}/python:3.13.3-r2"
