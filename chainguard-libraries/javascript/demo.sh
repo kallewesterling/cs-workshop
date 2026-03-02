@@ -43,7 +43,9 @@ pe "eval \$(chainctl auth pull-token \
   --repository=javascript \
   --parent=\$ORG_NAME)"
 
-pei "printf 'registry=https://libraries.cgr.dev/javascript/\n//libraries.cgr.dev/javascript/:_auth=%s\n//libraries.cgr.dev/javascript/:always-auth=true\n' \"\$(echo -n \"\${CHAINGUARD_JAVASCRIPT_IDENTITY_ID}:\${CHAINGUARD_JAVASCRIPT_TOKEN}\" | base64 | tr -d '\\n')\" > .npmrc"
+pei "export token=\$(echo -n \"\${CHAINGUARD_JAVASCRIPT_IDENTITY_ID}:\${CHAINGUARD_JAVASCRIPT_TOKEN}\" | base64 -w 0)"
+pe "npm config set registry https://libraries.cgr.dev/javascript/ --location=project"
+pe "npm config set //libraries.cgr.dev/javascript/:_auth \"\${token}\" --location=project"
 
 pe "cat .npmrc"
 pe "cat Dockerfile.npm"
