@@ -38,17 +38,12 @@ banner "Step 2: Build with Chainguard Libraries (npm)"
 
 pei "cd ../step2-cg"
 
-pe "CREDS_OUTPUT=\$(chainctl auth pull-token \
+pe "eval \$(chainctl auth pull-token \
+  --output env \
   --repository=javascript \
-  --parent=\$ORG_NAME \
-  --name=js-workshop-token-\$USER \
-  --ttl=1h \
-  -o json)"
+  --parent=\$ORG_NAME)"
 
-pei "export CGR_USER=\$(echo \$CREDS_OUTPUT | jq -r \".identity_id\")"
-pei "export CGR_TOKEN=\$(echo \$CREDS_OUTPUT | jq -r \".token\")"
-pei "export TOKEN=\$(printf '%s' \$\"{CGR_USER}:\${CGR_TOKEN}\" | base64 | tr -d '\n')"
-pei "printf 'registry=https://libraries.cgr.dev/javascript/\n//libraries.cgr.dev/javascript/:_auth=%s\n//libraries.cgr.dev/javascript/:always-auth=true\n' \"\$(echo -n \"\${CGR_USER}:\${CGR_TOKEN}\" | base64 | tr -d '\\n')\" > .npmrc"
+pei "printf 'registry=https://libraries.cgr.dev/javascript/\n//libraries.cgr.dev/javascript/:_auth=%s\n//libraries.cgr.dev/javascript/:always-auth=true\n' \"\$(echo -n \"\${CHAINGUARD_JAVASCRIPT_IDENTITY_ID}:\${CHAINGUARD_JAVASCRIPT_TOKEN}\" | base64 | tr -d '\\n')\" > .npmrc"
 
 pe "cat .npmrc"
 pe "cat Dockerfile.npm"
@@ -67,7 +62,7 @@ pei 'docker stop js-lib-example && docker rm js-lib-example'
 
 banner "Step 3: Build with Chainguard Libraries (Yarn)"
 
-pei "printf 'npmRegistryServer: \"https://libraries.cgr.dev/javascript/\"\nnpmAlwaysAuth: true\nnpmAuthIdent: \"%s\"\nnodeLinker: node-modules\n' \"\${CGR_USER}:\${CGR_TOKEN}\" > .yarnrc.yml"
+pei "printf 'npmRegistryServer: \"https://libraries.cgr.dev/javascript/\"\nnpmAlwaysAuth: true\nnpmAuthIdent: \"%s\"\nnodeLinker: node-modules\n' \"\${CHAINGUARD_JAVASCRIPT_IDENTITY_ID}:\${CHAINGUARD_JAVASCRIPT_TOKEN}\" > .yarnrc.yml"
 
 pe "cat .yarnrc.yml"
 pe "cat Dockerfile.yarn"
@@ -86,13 +81,12 @@ pei 'docker stop js-lib-example && docker rm js-lib-example'
 
 banner "Step 5: Build with Chainguard Libraries (Bun)"
 
-#pei "printf '[install]\nregistry = \"https://libraries.cgr.dev/javascript/\"\n\n[install.scopes]\n\"libraries.cgr.dev\" = { token = \"%s\", username = \"%s\" }\n' \"\${CGR_TOKEN}\" \"\${CGR_USER}\" > bunfig.toml"
 
 {
   echo "[install.registry]"
   echo "url = \"https://libraries.cgr.dev/javascript/\""
-  echo "username = \"${CGR_USER}\""
-  echo "password = \"${CGR_TOKEN}\""
+  echo "username = \"${CHAINGUARD_JAVASCRIPT_IDENTITY_ID}\""
+  echo "password = \"${CHAINGUARD_JAVASCRIPT_TOKEN}\""
 } > bunfig.toml
 
 pe "cat bunfig.toml"

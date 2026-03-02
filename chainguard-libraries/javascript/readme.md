@@ -14,7 +14,6 @@ This walkthrough demonstrates how to rebuild a Node.js application using Chaingu
 ## Prerequisites
 
 - **chainctl** with `libraries.javascript.pull` entitlements ([install docs](https://edu.chainguard.dev/chainguard/chainctl-usage/how-to-install-chainctl/))
-- **jq** for JSON parsing
 - **Docker** to build and run images
 - A Chainguard organization with JavaScript ecosystem entitlements
 
@@ -58,15 +57,10 @@ docker stop js-lib-example && docker rm js-lib-example && rm -rf node_modules
 ```bash
 cd ../step2-cg
 
-CREDS_OUTPUT=$(chainctl auth pull-token \
-  --library-ecosystem=javascript \
-  --parent=$ORG_NAME \
-  --name=js-workshop-token-$USER \
-  --ttl=8760h \
-  -o json)
-
-export CGR_USER=$(echo $CREDS_OUTPUT | jq -r ".identity_id")
-export CGR_TOKEN=$(echo $CREDS_OUTPUT | jq -r ".token")
+eval $(chainctl auth pull-token \
+  --output env \
+  --repository=javascript \
+  --parent=$ORG_NAME)
 ```
 
 ### Configure package managers
@@ -74,18 +68,18 @@ export CGR_TOKEN=$(echo $CREDS_OUTPUT | jq -r ".token")
 **npm/pnpm:**
 ```bash
 cat > .npmrc <<EOF
-registry=https://libraries.cgr.dev/npm/
-//libraries.cgr.dev/npm/:_auth=$(echo -n "${CGR_USER}:${CGR_TOKEN}" | base64)
-//libraries.cgr.dev/npm/:always-auth=true
+registry=https://libraries.cgr.dev/javascript/
+//libraries.cgr.dev/javascript/:_auth=$(echo -n "${CHAINGUARD_JAVASCRIPT_IDENTITY_ID}:${CHAINGUARD_JAVASCRIPT_TOKEN}" | base64)
+//libraries.cgr.dev/javascript/:always-auth=true
 EOF
 ```
 
 **Yarn:**
 ```bash
 cat > .yarnrc.yml <<EOF
-npmRegistryServer: "https://libraries.cgr.dev/npm/"
+npmRegistryServer: "https://libraries.cgr.dev/javascript/"
 npmAlwaysAuth: true
-npmAuthIdent: "${CGR_USER}:${CGR_TOKEN}"
+npmAuthIdent: "${CHAINGUARD_JAVASCRIPT_IDENTITY_ID}:${CHAINGUARD_JAVASCRIPT_TOKEN}"
 nodeLinker: node-modules
 EOF
 ```
@@ -93,11 +87,10 @@ EOF
 **Bun:**
 ```bash
 cat > bunfig.toml <<EOF
-[install]
-registry = "https://libraries.cgr.dev/npm/"
-
-[install.scopes]
-"libraries.cgr.dev" = { token = "${CGR_TOKEN}", username = "${CGR_USER}" }
+[install.registry]
+url = "https://libraries.cgr.dev/javascript/"
+username = "${CHAINGUARD_JAVASCRIPT_IDENTITY_ID}"
+password = "${CHAINGUARD_JAVASCRIPT_TOKEN}"
 EOF
 ```
 
@@ -178,9 +171,6 @@ docker stop js-lib-example && docker rm js-lib-example && rm -rf node_modules
 ## Cleanup
 
 ```bash
-ID=$(chainctl iam ids ls --parent=$ORG_NAME -o json | jq -r --arg name "js-workshop-token-$USER" '.items[] | select(.name | startswith($name)) | .id')
-chainctl iam identities delete "$ID" --parent "$ORG_NAME" --yes
-
 rm -f .npmrc .yarnrc.yml bunfig.toml
 docker image ls | grep js-lib-example | awk '{print $3}' | xargs docker image rm
 ```
@@ -188,5 +178,5 @@ docker image ls | grep js-lib-example | awk '{print $3}' | xargs docker image rm
 ## Troubleshooting
 
 - **BuildKit:** Enable with `DOCKER_BUILDKIT=1` when using `--secret` flags
-- **Auth errors:** Verify `CGR_USER` and `CGR_TOKEN` are set correctly
+- **Auth errors:** Verify `CHAINGUARD_JAVASCRIPT_IDENTITY_ID` and `CHAINGUARD_JAVASCRIPT_TOKEN` are set correctly
 - **Port conflicts:** Use `-p 3001:3000` if port 3000 is in use
